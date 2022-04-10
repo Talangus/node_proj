@@ -6,7 +6,7 @@ const peopleRouter = require('./routers/people')
 
 
 app.get('/', (req, res) => {
-  res.send('Hello World!')
+  //
 })
 
 app.get('/:id', (req, res) => {

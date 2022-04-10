@@ -3,16 +3,31 @@ const PersonData = require('../modules/PersonData')
 const peopleRouter = express.Router()
 
 peopleRouter.get('/', (req, res) => {
-    res.send('we will return an array of PersonDetails ')
+    //db.getPersonDetails() (retrun array of person details)
   } )
 
 peopleRouter.get('/:id', (req, res) => {
-    res.send('we will return ' + req.params.id + 's PersonData')
+    //db.getPersonDetails(id) (throw error if doesn't exist)
   } )
 
+peopleRouter.patch('/:id') {
+    //db.updatePersonDetails(id, personDetails) returns Persondetails
+}//complete patch 
+
+
+peopleRouter.delete( "id")// db.removePersondetails(id) throws error if dosent exist
+
+peopleRouter.get('/:id/tasks') // 
+  //db.getTaskdetails(id, status (optional)) /returns tasks of person
+
+
+peopleRouter.post('/:id/tasks'){
+  //db.createTaskDetails (id, TaskData) //need to add to task table and update person table
+}
+
+
 peopleRouter.post('/', (req, res) => {
-    res.send('we will parse the body and create new person')
-    pData = new PersonData("Tal", "talangus@gmail.com", "js")
+   //db.insert(personData) -if email exist throws error
 } )
 
 module.exports = peopleRouter
