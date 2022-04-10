@@ -9,6 +9,7 @@ class TaskData {
         this.size = size
     }
 
-}       //maybe we should create task as abstract class, with chore and HW implementing it
+}       //maybe we should create task as abstract class, with chore and HW implementing it 
+        // for example chore shouldn't have course field 
 
 module.exports = TaskData;
