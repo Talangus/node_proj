@@ -2,21 +2,11 @@ const express = require('express')
 const app = express()
 const port = 3000
 const peopleRouter = require('./routers/people')
+const tasksRouter = require('./routers/tasks')
 
-
-
-app.get('/', (req, res) => {
-  //
-})
-
-app.get('/:id', (req, res) => {
-  res.send(req.params.id)
-})
 
 app.use('/api/people', peopleRouter)
+app.use('/api/tasks', tasksRouter)
 
 
-
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+app.listen(port)

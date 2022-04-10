@@ -1,29 +1,35 @@
+const express = require('express')
+const PersonData = require('../modules/PersonData')
+const PersonDetails = require('../modules/PersonDetails')
+const TaskData = require('../modules/TaskData')
+const TaskDetails = require('../modules/TaskDetails')
+const tasksRouter = express.Router()
 
 
-taskrouter.get('/:id') {
+
+tasksRouter.get('/:id', (req, res) => {}) 
     // db.getTaskDetails(id) 
-}
 
-taskrouter.patch('/:id') {
+
+tasksRouter.patch('/:id', (req, res) => {})
     //db.updateTaskDetails(id, taskData), returns TaskDetails
-}
 
-taskrouter.delete('/:id'){
+
+tasksRouter.delete('/:id', (req, res) => {})
     //db.deleteTaskDetails(id)
-}
 
-taskrouter.get('/:id/status'){
+
+tasksRouter.get('/:id/status', (req, res) => {})
     //db.getTaskdetails(id) returns tasksDetails
-}
 
-taskrouter.put(':id/status'){
+
+tasksRouter.put(':id/status', (req, res) => {})
     //db.updateTaskStatus(id, status)
-}
 
-taskrouter.get('/:id/owner'){
+
+tasksRouter.get('/:id/owner', (req, res) => {})
     //db.getTaskdetails(id)
-}
 
-taskrouter.put('/:id/owner'){
+
+tasksRouter.put('/:id/owner', (req, res) => {})
     //db.updateTaskOwner(taskid, Ownerid )
-}

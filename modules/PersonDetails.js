@@ -1,10 +1,10 @@
 class PersonDetails {
-    constructor(name, email, favoriteProgrammingLanguage){
-        this.id = "test"
+    constructor(id, name, email, favoriteProgrammingLanguage, activeTaskCount){
+        this.id = id
         this.name = name
         this.email = email
         this.favoriteProgrammingLanguage = favoriteProgrammingLanguage
-        this.activeTaskCount = 0
+        this.activeTaskCount = activeTaskCount
     }
 
 }
