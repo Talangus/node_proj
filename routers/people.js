@@ -31,4 +31,10 @@ peopleRouter.get('/:id/tasks', (req, res) => {}) //
 peopleRouter.post('/:id/tasks', (req, res) => {})
   //db.createTaskDetails (id, TaskData) //need to add to task table and update person table
 
+peopleRouter.get('/test/:id', (req, res) => {
+    let pDetails = await db.getPersonDetails(id)
+    res.send(JSON.stringify(pDetails)) 
+} )
+
+
 module.exports = peopleRouter

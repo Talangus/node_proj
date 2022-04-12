@@ -1,10 +1,10 @@
 class PersonDetails {
-    constructor(id, name, email, favoriteProgrammingLanguage, activeTaskCount){
-        this.id = id
-        this.name = name
-        this.email = email
-        this.favoriteProgrammingLanguage = favoriteProgrammingLanguage
-        this.activeTaskCount = activeTaskCount
+    constructor(dict){
+        this.id = dict.id
+        this.name = dict.name
+        this.email = dict.email
+        this.favoriteProgrammingLanguage = dict.favLang
+        this.activeTaskCount = dict.activeTasks
     }
 
 }
