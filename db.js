@@ -1,14 +1,19 @@
+const util = require('util') //for debug
+
 const sqlite3 = require('sqlite3').verbose()
+const crypto =  require('crypto')
 const db = new sqlite3.Database('./database.sqlite3')
 const PersonData = require('./modules/PersonData')
-const crypto =  require('crypto')
 const PersonDetails = require('./modules/PersonDetails')
+const RUN = 0
+const GET = 1
+const ALL = 2
 const  tables = {
     personsTable: `
 CREATE TABLE IF NOT EXISTS persons (
     id TEXT PRIMARY KEY,
     name TEXT,
-    email TEXT,
+    email TEXT UNIQUE,
     favLang TEXT,
     activeTasks INTEGER)`,
     homeworkTable:`
@@ -31,7 +36,8 @@ CREATE TABLE IF NOT EXISTS chores (
 
 const cmds = {
     insertPersonData: 'INSERT INTO persons (id, name, email, favLang, activeTasks) VALUES (?, ?, ?, ?, ?)',
-    getPersonDetails: 'SELECT * FROM persons WHERE id = ?'
+    getPersonDetails: 'SELECT * FROM persons WHERE id = ?',
+    getAllPersonDetails: 'SELECT * FROM persons'
 }
 
 for (var key in tables){
@@ -40,11 +46,28 @@ for (var key in tables){
 
 class LocalDatabase {
     
+    myDB(type, cmd, params){
+        return new Promise((resolve, reject) => {
+            switch(type){
+                case(RUN):
+                db.run(cmd, params, (err, res) => err ? reject(err) : resolve(res))
+                break;
+                
+                case(GET):
+                db.get(cmd, params,(err, res) => err ? reject(err) : resolve(res))
+                break;
+                
+                case(ALL):
+                db.all(cmd, params, (err, res) => err ? reject(err) : resolve(res))
+            }
+        })    
+    }
+    
     insertPersonData(pData){
         db.run(cmds.insertPersonData, [crypto.randomBytes(10).toString('hex'), pData.name, pData.email, pData.favoriteProgrammingLanguage, 0])
     }
 
-    async getPersonDetails(id) {
+    getPersonDetails(id) {
         let promise =  new Promise((resolve, reject) => {
             db.get(cmds.getPersonDetails, [id], function(err, res) {
                 if (err) {
@@ -52,23 +75,34 @@ class LocalDatabase {
                 } else {    
                     resolve(res) }})
             })
-        var pDetails = await promise.then(dict => {return new PersonDetails(dict)}, err => {throw err})
-        console.log(pDetails)
-        console.log(JSON.stringify(pDetails))
-        return pDetails
-    } 
+        return promise.then(dict => {return dict != undefined ? new PersonDetails(dict) : null}, err => {throw err})  //db returns undifined if the query res is empty
+    }
+    
+    getAllPersonDetails() {
+        // let promise =  new Promise((resolve, reject) => {
+        //     db.all(cmds.getAllPersonDetails, [], function(err, res) {
+        //         if (err) {
+        //             reject(err)
+        //         } else {    
+        //             resolve(res) }})
+        //     })
+        let promise = this.myDB(ALL, cmds.getAllPersonDetails, [])
+        return promise.then( arr => {return arr.map( dict => new PersonDetails(dict))},  err => {throw err})
+    }
 
     
 
 }
 
 myLocalDatabase = new LocalDatabase()
-//pData = new PersonData("tal", "talangus@f.com", "python")
-//myLocalDatabase.insertPersonData(pData)
-
-myLocalDatabase.getPersonDetails("450f7a51d1d3b11b3d48")
-
-
+pData1 = new PersonData("tal", "talangus@f.com", "python")
+pData2 = new PersonData("tal", "talangus@fi.com", "python")
+//myLocalDatabase.insertPersonData(pData1)
+//myLocalDatabase.insertPersonData(pData2)
+//t = myLocalDatabase.getPersonDetails("5a5c2847efaef3a0fc33")
+//t = myLocalDatabase.getPersonDetails("1")
+t = myLocalDatabase.getAllPersonDetails()
+t.then(result => console.log(util.inspect(result,false, null)))
 
 module.exports = myLocalDatabase             //we export one instance - a singelton
 
