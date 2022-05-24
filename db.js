@@ -5,6 +5,7 @@ const crypto =  require('crypto')
 const db = new sqlite3.Database('./database.sqlite3')
 const PersonData = require('./modules/PersonData')
 const PersonDetails = require('./modules/PersonDetails')
+const TaskData = require('./modules/TaskData')
 const RUN = 0
 const GET = 1
 const ALL = 2
@@ -14,8 +15,8 @@ CREATE TABLE IF NOT EXISTS persons (
     id TEXT PRIMARY KEY,
     name TEXT,
     email TEXT UNIQUE,
-    favLang TEXT,
-    activeTasks INTEGER)`,
+    favoriteProgrammingLanguage TEXT,
+    activeTaskCount INTEGER)`,
     homeworkTable:`
 CREATE TABLE IF NOT EXISTS homework (
     id TEXT PRIMARY KEY,
@@ -35,18 +36,28 @@ CREATE TABLE IF NOT EXISTS chores (
     FOREIGN KEY(ownerId) REFERENCES persons(id))`}  //due date format is YYYY-MM-DD HH:MM:SS.SSS
 
 const cmds = {
-    insertPersonData: 'INSERT INTO persons (id, name, email, favLang, activeTasks) VALUES (?, ?, ?, ?, ?)',
+    insertPersonData: 'INSERT INTO persons (id, name, email, favoriteProgrammingLanguage, activeTaskCount) VALUES (?, ?, ?, ?, ?)',
+    insertChoreData: 'INSERT INTO chores (id, ownerId, status, description, size) VALUES (?, ?, ?, ?, ?)',
+    insertHomeorkData: 'INSERT INTO homework (id, ownerId, status, course, dueDate, details) VALUES (?, ?, ?, ?, ?, ?)',
     getPersonDetails: 'SELECT * FROM persons WHERE id = ?',
-    getAllPersonDetails: 'SELECT * FROM persons'
+    getAllPersonDetails: 'SELECT * FROM persons',
+    updatePersonDetails: 'UPDATE persons SET name = ?, email = ?, favoriteProgrammingLanguage = ?, activeTaskCount = ? WHERE id = ?',
+    removePersondetails: 'DELETE FROM persons WHERE id = ?',
+    incrementTaskCount: 'UPDATE persons set activeTaskCount = activeTaskCount + 1 WHERE id = ? ',
+    getAllChoreDetails: 'SELECT * FROM chores WHERE ownerId = ? AND status LIKE ?',
+    getAllHomeworkDetails: 'SELECT * FROM homework WHERE ownerId = ? AND status LIKE ?'
+    
 }
 
 for (var key in tables){
        db.run(tables[key])
 }
 
+let getNewId = () => crypto.randomBytes(10).toString('hex')
+
 class LocalDatabase {
     
-    myDB(type, cmd, params){
+    myDB(type, cmd, params){                            //sqlite functions wrapper
         return new Promise((resolve, reject) => {
             switch(type){
                 case(RUN):
@@ -62,9 +73,9 @@ class LocalDatabase {
             }
         })    
     }
-    
+
     insertPersonData(pData){
-        let promise =this.myDB(RUN, cmds.insertPersonData, [crypto.randomBytes(10).toString('hex'), pData.name, pData.email, pData.favoriteProgrammingLanguage, 0])
+        let promise =this.myDB(RUN, cmds.insertPersonData, [getNewId(), pData.name, pData.email, pData.favoriteProgrammingLanguage, 0])
         return promise
     }
 
@@ -78,18 +89,45 @@ class LocalDatabase {
         return promise.then( arr => {return arr.map( dict => new PersonDetails(dict))},  err => {throw err})
     }
 
-    
+    updatePersonDetails(id, pDetails){
+        let promise = this.myDB(RUN, cmds.updatePersonDetails, [pDetails.name, pDetails.email, pDetails.favoriteProgrammingLanguage, pDetails.activeTaskCount, id])
+        return promise
+    }
+
+    removePersondetails(id){
+        let existPromise = this.getPersonDetails(id)                    //checks if recored exist before deletion
+        let deletePromise = existPromise.then(res => {return res != null ? this.myDB(RUN, cmds.removePersondetails, [id]) : null }, err => {throw err} )         
+        return deletePromise
+    }
+
+    insertTaskData(ownerId, tData){
+        let insertPromise = (tData.type == "HomeWork") ? 
+        this.myDB(RUN, cmds.insertHomeorkData, [getNewId(), ownerId, tData.status, tData.course, tData.dueDate, tData.details]) :
+        this.myDB(RUN, cmds.insertChoreData, [getNewId(), ownerId, tData.status, tData.description, tData.size])
+        
+        let updatePromise = tData.status != "Done" ? 
+        insertPromise.then(res => {this.myDB(RUN, cmds.incrementTaskCount ,[ownerId])}, err => {throw err}) :
+        insertPromise
+        
+        return updatePromise
+    }
+
+    getTaskdetails(ownerId, status){
+        let chorsePromise = this.myDB(ALL, cmds.getAllChoreDetails, [ownerId, status])
+        chorsePromise.then(arr => arr, err => {throw err})                              //create choreDetails
+        let homeworkPromise = this.myDB(ALL, cmds.getAllHomeworkDetails, [ownerId, status]) //think on hot to combine them
+
+    }
 
 }
 
 myLocalDatabase = new LocalDatabase()
 pData1 = new PersonData("tal", "talangus@f.com", "python")
-pData2 = new PersonData("tal", "talangus@fi.com", "python")
 //myLocalDatabase.insertPersonData(pData1)
-//myLocalDatabase.insertPersonData(pData2)
-//t = myLocalDatabase.getPersonDetails("da276e2a70e724655dd5")
-//t = myLocalDatabase.getPersonDetails("1")
-t = myLocalDatabase.getAllPersonDetails()
+tData1 = new TaskData("Chore", "101", "my details", "10.05.10", "Done", "my descript", "Large")
+//t = myLocalDatabase.insertTaskData("aaa1a530e356da4b9ba9", tData1)
+
+t = myLocalDatabase.getTaskdetails("aaa1a530e356da4b9ba9", "%")
 t.then(result => console.log(util.inspect(result,false, null)))
 
 module.exports = myLocalDatabase             //we export one instance - a singelton

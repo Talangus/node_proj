@@ -3,8 +3,8 @@ class PersonDetails {
         this.id = dict.id
         this.name = dict.name
         this.email = dict.email
-        this.favoriteProgrammingLanguage = dict.favLang
-        this.activeTaskCount = dict.activeTasks
+        this.favoriteProgrammingLanguage = dict.favoriteProgrammingLanguage
+        this.activeTaskCount = dict.activeTaskCount
     }
 
 }
