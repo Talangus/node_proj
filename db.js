@@ -64,28 +64,16 @@ class LocalDatabase {
     }
     
     insertPersonData(pData){
-        db.run(cmds.insertPersonData, [crypto.randomBytes(10).toString('hex'), pData.name, pData.email, pData.favoriteProgrammingLanguage, 0])
+        let promise =this.myDB(RUN, cmds.insertPersonData, [crypto.randomBytes(10).toString('hex'), pData.name, pData.email, pData.favoriteProgrammingLanguage, 0])
+        return promise
     }
 
     getPersonDetails(id) {
-        let promise =  new Promise((resolve, reject) => {
-            db.get(cmds.getPersonDetails, [id], function(err, res) {
-                if (err) {
-                    reject(err)
-                } else {    
-                    resolve(res) }})
-            })
+        let promise = this.myDB(GET, cmds.getPersonDetails, [id])
         return promise.then(dict => {return dict != undefined ? new PersonDetails(dict) : null}, err => {throw err})  //db returns undifined if the query res is empty
     }
     
     getAllPersonDetails() {
-        // let promise =  new Promise((resolve, reject) => {
-        //     db.all(cmds.getAllPersonDetails, [], function(err, res) {
-        //         if (err) {
-        //             reject(err)
-        //         } else {    
-        //             resolve(res) }})
-        //     })
         let promise = this.myDB(ALL, cmds.getAllPersonDetails, [])
         return promise.then( arr => {return arr.map( dict => new PersonDetails(dict))},  err => {throw err})
     }
@@ -99,7 +87,7 @@ pData1 = new PersonData("tal", "talangus@f.com", "python")
 pData2 = new PersonData("tal", "talangus@fi.com", "python")
 //myLocalDatabase.insertPersonData(pData1)
 //myLocalDatabase.insertPersonData(pData2)
-//t = myLocalDatabase.getPersonDetails("5a5c2847efaef3a0fc33")
+//t = myLocalDatabase.getPersonDetails("da276e2a70e724655dd5")
 //t = myLocalDatabase.getPersonDetails("1")
 t = myLocalDatabase.getAllPersonDetails()
 t.then(result => console.log(util.inspect(result,false, null)))
