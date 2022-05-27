@@ -179,7 +179,7 @@ function insertTasks(ownerid){
 
 myLocalDatabase = new LocalDatabase()
 // insertPersones()
- //printRes(myLocalDatabase.getAllPersonDetails())
+//printRes(myLocalDatabase.getAllPersonDetails())
 // insertTasks('cea56594f9398be16161')
 //printRes(myLocalDatabase.getPersonTaskdetails('cea56594f9398be16161', 'Active'))
 //printRes(myLocalDatabase.getTaskDetails('8a787547d6c352985924'))
