@@ -49,8 +49,10 @@ const cmds = {
     getTasktype: 'SELECT type FROM tasks WHERE id = ?',
     getChoreDetails: 'SELECT * FROM chores WHERE id = ?',
     getHomeworkDetails: 'SELECT * FROM homework WHERE id = ?',
-    updatePersonDetails: 'UPDATE persons SET name = ?, email = ?, favoriteProgrammingLanguage = ?, activeTaskCount = ? WHERE id = ?',
     removePersondetails: 'DELETE FROM persons WHERE id = ?',
+    removeTaskdetails: 'DELETE FROM tasks WHERE id = ?',
+    removeChoredetails: 'DELETE FROM chores WHERE id = ?',
+    removeHomeorkdetails: 'DELETE FROM homework WHERE id = ?',
     incrementTaskCount: 'UPDATE persons set activeTaskCount = activeTaskCount + 1 WHERE id = ? ',
     getAllChoreDetails: 'SELECT * FROM chores WHERE ownerId = ? AND status LIKE ?',
     getAllHomeworkDetails: 'SELECT * FROM homework WHERE ownerId = ? AND status LIKE ?',
@@ -63,6 +65,35 @@ for (var key in tables){
 }
 
 let getNewId = () => crypto.randomBytes(10).toString('hex')
+
+function parsePatchCmd(id, data,type){                                               //make sure Data isn't empty, and not only status change
+    let cmd, vals, names 
+    switch(type){
+        case('person'):
+            vals = [data.name, data.email, data.favoriteProgrammingLanguage]
+            names = ['name = \'', 'email = \'', 'favoriteProgrammingLanguage = \'']
+            cmd = 'UPDATE persons SET '
+            cmd = cmd + vals.reduce((prev, curr, index) => {return (curr != undefined) ? (prev == undefined) ? names[index] + curr + '\'' :
+                                                                prev + ', ' + names[index] + curr + '\''  : prev}, undefined)
+            return cmd = cmd + ' WHERE id = \'' + id + '\''
+        
+        case('HomeWork'):
+            vals = [data.status, data.course, data.dueDate, data.details]
+            names = ['status = \'', 'course = \'', 'dueDate = \'',  'details = \'' ]
+            cmd = 'UPDATE homework SET '
+            cmd = cmd + vals.reduce((prev, curr, index) => {return (curr != undefined) ? (prev == undefined) ? names[index] + curr + '\'' :
+                                                                prev + ', ' + names[index] + curr + '\''  : prev}, undefined)
+            return cmd = cmd + ' WHERE id = \'' + id + '\''
+
+        case('Chore'):
+            vals = [data.status, data.description, data.size]
+            names = ['status = \'', 'description = \'', 'size = \'']
+            cmd = 'UPDATE chores SET '
+            cmd = cmd + vals.reduce((prev, curr, index) => {return (curr != undefined) ? (prev == undefined) ? names[index] + curr + '\'' :
+                                                                prev + ', ' + names[index] + curr + '\''  : prev}, undefined)
+            return cmd = cmd + ' WHERE id = \'' + id + '\''
+    }
+}
 
 class LocalDatabase {
     
@@ -98,8 +129,8 @@ class LocalDatabase {
         return promise.then( arr => {return arr.map( dict => new PersonDetails(dict))},  err => {throw err})
     }
 
-    updatePersonDetails(id, pDetails){
-        let promise = this.myDB(RUN, cmds.updatePersonDetails, [pDetails.name, pDetails.email, pDetails.favoriteProgrammingLanguage, pDetails.activeTaskCount, id])
+    updatePersonDetails(id, pData){
+        let promise = this.myDB(RUN, parsePatchCmd(id, pData, 'person'), [])
         return promise
     }
 
@@ -119,10 +150,6 @@ class LocalDatabase {
             insertPromise = this.myDB(RUN, cmds.insertChoreData, [taskId, ownerId, tData.status, tData.description, tData.size])
             insertPromise = insertPromise.then( () => this.myDB(RUN, cmds.insertTaskData, [taskId, 'Chore']), err => {throw err})
         }
-        // let insertPromise = (tData.type == "HomeWork") ? 
-        // this.myDB(RUN, cmds.insertHomeorkData, [getNewId(), ownerId, tData.status, tData.course, tData.dueDate, tData.details]) :
-        // this.myDB(RUN, cmds.insertChoreData, [getNewId(), ownerId, tData.status, tData.description, tData.size])
-        
         let updatePromise = tData.status != "Done" ? 
         insertPromise.then(() => {this.myDB(RUN, cmds.incrementTaskCount ,[ownerId])}, err => {throw err}) :
         insertPromise
@@ -151,10 +178,25 @@ class LocalDatabase {
                                                     null}))
     }
 
+    updateTaskDetails(taskId, tData){
+        let promise = this.myDB(GET, cmds.getTasktype, [taskId])
+        return promise.then((dict => {return dict.type == 'HomeWork' ? this.myDB(RUN, parsePatchCmd(taskId, tData, 'HomeWork'), []):
+                                             dict.type == 'Chore' ? this.myDB(RUN, parsePatchCmd(taskId, tData, 'Chore' ), []) : null}))
+    }
+
+    deleteTaskDetails(taskId){
+        let existPromise = this.myDB(GET, cmds.getTasktype, [taskId]).then(res => {return res == undefined ? null : res})                   //checks if recored exist before deletion
+        let deletePromise = existPromise.then(dict => {return dict == null ? 0 : 
+                                                              dict.type == 'HomeWork' ? this.myDB(RUN, cmds.removeHomeorkdetails, [taskId]):
+                                                              this.myDB(RUN, cmds.removeChoredetails, [taskId])}
+                                                              , err => {throw err} )
+        return deletePromise.then(res => { return res != 0 ? this.myDB(RUN, cmds.removeTaskdetails, [taskId]): null},  err => {throw err})
+    }
+
 }
 
 //TODO:
-//- patch params are optional, need string interpolation for cmd both on tasks and people patch
+//- patch params are optional, need to check active tasks count
 
 
 
@@ -178,10 +220,20 @@ function insertTasks(ownerid){
 
 
 myLocalDatabase = new LocalDatabase()
-// insertPersones()
-//printRes(myLocalDatabase.getAllPersonDetails())
-// insertTasks('cea56594f9398be16161')
-//printRes(myLocalDatabase.getPersonTaskdetails('cea56594f9398be16161', 'Active'))
-//printRes(myLocalDatabase.getTaskDetails('8a787547d6c352985924'))
+//insertPersones()
+printRes(myLocalDatabase.getAllPersonDetails())
+//insertTasks('3e846dd4cad0b2abdc48')
+//printRes(myLocalDatabase.getPersonTaskdetails('3e846dd4cad0b2abdc48'))
+//printRes(myLocalDatabase.getTaskDetails('6cf9f6bca2cc3f6e6ec4'))
+// tData1 = new TaskData("HomeWork", "Done", undefined, "10.05.4230", "my details", undefined, undefined)
+// tData2 = new TaskData("Chore", "Done", undefined, undefined, undefined, "hard task vey",undefined)
+// pData1 = new PersonData(undefined, "talangus@f2.com22222", "python32222")
+//myLocalDatabase.updatePersonDetails('383ec869afe6dbeda318', pData1)
+//myLocalDatabase.updateTaskDetails('c6349ff2a32cf3c135d9', tData2)
+//printRes(myLocalDatabase.getTaskDetails('74d710fecaeaa096934c'))
+//console.log(parsePatchCmd('d66812808abd6dca79ea', tData1, 'HomeWork'))
+printRes(myLocalDatabase.deleteTaskDetails('b1921a68bdf2385fbd12'))
+//printRes(myLocalDatabase.removePersondetails('ed461887e9f633df4d0d'))
+
 module.exports = myLocalDatabase             //we export one instance - a singelton
 
