@@ -171,7 +171,7 @@ class LocalDatabase {
 
     getTaskDetails(taskId){
         let promise = this.myDB(GET, cmds.getTasktype, [taskId])
-        return promise.then((dict => {return dict == undefined ? null : dict.type == 'HomeWork' ? 
+        return promise.then((dict => {return dict.type == 'HomeWork' ? 
                                                         this.myDB(GET, cmds.getHomeworkDetails, [taskId]).then(dict => new HomeworkDetails(dict)):
                                                     dict.type == 'Chore' ? 
                                                     this.myDB(GET, cmds.getChoreDetails, [taskId]).then(dict => new choreDetails(dict)) : 
