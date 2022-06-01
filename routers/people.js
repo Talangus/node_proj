@@ -25,10 +25,12 @@ peopleRouter.patch('/:id', (req, res) => {
 peopleRouter.delete('/:id', (req, res) => {})// db.removePersondetails(id) throws error if dosent exist
 
 peopleRouter.get('/:id/tasks', (req, res) => {}) // 
-  //db.getTaskdetails(id, status (optional)) /returns tasks of person
+  //db.getPersonTaskdetails(id, status (optional)) /returns tasks of person
 
 
 peopleRouter.post('/:id/tasks', (req, res) => {})
-  //db.createTaskDetails (id, TaskData) //need to add to task table and update person table
+  
+  //db.insertTaskData (id, TaskData) //need to add to task table and update person table
+
 
 module.exports = peopleRouter

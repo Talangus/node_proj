@@ -1,5 +1,5 @@
 class TaskData {
-    constructor(type, course, details, dueDate, status, description, size){
+    constructor(type, status, course, dueDate, details, description, size){
         this.type = type
         this.course = course
         this.details = details
