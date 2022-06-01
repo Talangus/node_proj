@@ -12,4 +12,4 @@ class choreDetails extends TaskDetails {
     }
 }
 
-module.exports = choreDetails
+module.exports = choreDetails;

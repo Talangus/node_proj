@@ -13,4 +13,4 @@ class HomeworkDetails extends TaskDetails {
     }
 }
 
-module.exports = HomeworkDetails
+module.exports = HomeworkDetails;

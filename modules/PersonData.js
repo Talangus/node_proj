@@ -6,4 +6,4 @@ class PersonData{
     }
 }
 
-module.exports = PersonData
+module.exports = PersonData;
