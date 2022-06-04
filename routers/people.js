@@ -16,8 +16,7 @@ peopleRouter.post('/', (req, res) => {
   /* check all fildes exists and not null (extra values?) */
   const newPerson = new PersonData(req.body.name, req.body.emails, req.body.favoriteProgrammingLanguage); 
   db.insertPersonData(newPerson)
-    .then(res.status(201).send('Person created successfully'))
-    .catch(res.send("A person with email '"+req.body.emails+"' already exists.")); //-if email exist throws error;
+    .then(succ => {res.status(201).send('Person created successfully')}, err => {res.status(400).send("A person with email '"+req.body.emails+"' already exists.")}); //-if email exist throws error;
  });
 
 peopleRouter.get('/:id', (req, res) => {

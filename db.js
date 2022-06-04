@@ -234,7 +234,10 @@ function insertTasks(ownerid){
 
 
 const myLocalDatabase = new LocalDatabase();
-insertPersones();
+//insertPersones();
+//pData1 = new PersonData("tal", "talangus@f.com", "python")
+//myLocalDatabase.insertPersonData(pData1)
+    //.then(res => {console.log('Person created successfully')} , err => (console.log("A person with email '"+pData1.email+"' already exists.")))
 //printRes(myLocalDatabase.getAllPersonDetails());
 //insertTasks('3e846dd4cad0b2abdc48')
 //printRes(myLocalDatabase.getPersonTaskdetails('3e846dd4cad0b2abdc48'))
