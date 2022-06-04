@@ -7,6 +7,16 @@ const db = require('../db');
 const peopleRouter = express.Router();
 
 peopleRouter.get('/', (req, res) => {
+<<<<<<< HEAD
+    //db.getPersonDetails() (retrun array of person details)
+    
+  } )
+
+peopleRouter.post('/', (req, res) => {
+    //db.insert(personData) -if email exist throws error
+    
+ } )
+=======
   db.getAllPersonDetails()
   .then(data => res.send(data))
   .catch(err => res.send(err));
@@ -19,6 +29,7 @@ peopleRouter.post('/', (req, res) => {
     .then(succ => {res.status(201).send('Person created successfully')},
      err => {res.status(400).send("A person with email '"+req.body.emails+"' already exists.")}); //-if email exist throws error;
  });
+>>>>>>> f212ed737a36b11cca9a9e93c3b0bce4a3757f72
 
 peopleRouter.get('/:id', (req, res) => {
     db.getPersonDetails(req.params.id)

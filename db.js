@@ -45,7 +45,7 @@ const cmds = {
     insertTaskData: 'INSERT INTO tasks (id, type) VALUES (?, ?)',
     insertChoreData: 'INSERT INTO chores (id, ownerId, status, description, size) VALUES (?, ?, ?, ?, ?)',
     insertHomeorkData: 'INSERT INTO homework (id, ownerId, status, course, dueDate, details) VALUES (?, ?, ?, ?, ?, ?)',
-    getPersonDetails: 'SELECT * FROM persons WHERE id = ?',
+    updatePersonDetails: 'SELECT * FROM persons WHERE id = ?',
     getTasktype: 'SELECT type FROM tasks WHERE id = ?',
     getChoreDetails: 'SELECT * FROM chores WHERE id = ?',
     getHomeworkDetails: 'SELECT * FROM homework WHERE id = ?',
@@ -210,7 +210,13 @@ class LocalDatabase {
 }
 
 //TODO:
-//- patch params are optional, need to check active tasks count
+//- need to check active tasks count
+//if the result is empty, throw error. on all gets.
+//removePersondetails - don't check if person exists, remove its tasks.
+//updateTaskDetails - check if owner changed/status changed and update task count
+//deleteTaskDetails - update task count
+//updateTaskStatus - update count
+//updateTaskOwner - update counts of previous and new owner.
 
 
 
