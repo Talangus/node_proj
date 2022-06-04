@@ -7,10 +7,12 @@ const peopleRouter = express.Router()
 
 peopleRouter.get('/', (req, res) => {
     //db.getPersonDetails() (retrun array of person details)
+    
   } )
 
 peopleRouter.post('/', (req, res) => {
     //db.insert(personData) -if email exist throws error
+    
  } )
 
 peopleRouter.get('/:id', (req, res) => {
