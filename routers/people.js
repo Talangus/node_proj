@@ -22,7 +22,7 @@ peopleRouter.post('/', (req, res) => {
 
 peopleRouter.get('/:id', (req, res) => {
     db.getPersonDetails(req.params.id)
-      .then(data => res.send(data));
+      .then(data => res.send(data) , err => res.status(400).send("Person with id " + req.params.id + "doesn't exist"));
       //.catch(res.send("A person with the id does not exists.")) //(throw error if doesn't exist)
 });
 
