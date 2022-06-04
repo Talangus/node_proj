@@ -6,7 +6,6 @@ class PersonDetails {
         this.favoriteProgrammingLanguage = dict.favoriteProgrammingLanguage
         this.activeTaskCount = dict.activeTaskCount
     }
-
 }
 
 module.exports = PersonDetails;
