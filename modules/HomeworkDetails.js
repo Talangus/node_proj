@@ -12,5 +12,4 @@ class HomeworkDetails extends TaskDetails {
         this.dueDate = dict.dueDate
     }
 }
-
 module.exports = HomeworkDetails;

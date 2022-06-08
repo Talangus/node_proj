@@ -7,6 +7,7 @@ const PersonDetails = require('./modules/PersonDetails')
 const TaskData = require('./modules/TaskData')
 const choreDetails = require('./modules/ChoreDetails')
 const HomeworkDetails = require('./modules/HomeworkDetails')
+const { stat } = require('fs')
 const RUN = 0
 const GET = 1
 const ALL = 2
@@ -38,11 +39,13 @@ CREATE TABLE IF NOT EXISTS chores (
     TasksTable:`
 CREATE TABLE IF NOT EXISTS tasks (
     id TEXT PRIMARY KEY,
-    type TEXT)`}  //due date format is YYYY-MM-DD HH:MM:SS.SSS
+    type TEXT,
+    ownerId TEXT,
+    FOREIGN KEY(ownerId) REFERENCES persons(id))`}  //due date format is YYYY-MM-DD HH:MM:SS.SSS
 
 const cmds = {
     insertPersonData: 'INSERT INTO persons (id, name, email, favoriteProgrammingLanguage, activeTaskCount) VALUES (?, ?, ?, ?, ?)',
-    insertTaskData: 'INSERT INTO tasks (id, type) VALUES (?, ?)',
+    insertTaskData: 'INSERT INTO tasks (id, type, ownerId) VALUES (?, ?, ?)',
     insertChoreData: 'INSERT INTO chores (id, ownerId, status, description, size) VALUES (?, ?, ?, ?, ?)',
     insertHomeorkData: 'INSERT INTO homework (id, ownerId, status, course, dueDate, details) VALUES (?, ?, ?, ?, ?, ?)',
     getPersonDetails: 'SELECT * FROM persons WHERE id = ?',
@@ -53,7 +56,11 @@ const cmds = {
     removeTaskdetails: 'DELETE FROM tasks WHERE id = ?',
     removeChoredetails: 'DELETE FROM chores WHERE id = ?',
     removeHomeorkdetails: 'DELETE FROM homework WHERE id = ?',
+    removePersonTasks: 'DELETE FROM tasks where ownerId = ?',
+    removePersonHomework: 'DELETE FROM homework where ownerId = ?',
+    removePersonChore: 'DELETE FROM chores where ownerId = ?',
     incrementTaskCount: 'UPDATE persons set activeTaskCount = activeTaskCount + 1 WHERE id = ? ',
+    decrementTaskCount: 'UPDATE persons set activeTaskCount = activeTaskCount - 1 WHERE id = ? ',
     getAllChoreDetails: 'SELECT * FROM chores WHERE ownerId = ? AND status LIKE ?',
     getAllHomeworkDetails: 'SELECT * FROM homework WHERE ownerId = ? AND status LIKE ?',
     getAllPersonDetails: 'SELECT * FROM persons'
@@ -87,7 +94,7 @@ function parsePatchCmd(id, data, type){                                         
 
         case('Chore'):
             vals = [data.status, data.description, data.size, data.ownerId]
-            names = ['status = \'', 'description = \'', 'size = \'', , 'ownerId = \'']
+            names = ['status = \'', 'description = \'', 'size = \'', 'ownerId = \'']
             cmd = 'UPDATE chores SET '
             cmd = cmd + vals.reduce((prev, curr, index) => {return (curr != undefined) ? (prev == undefined) ? names[index] + curr + '\'' :
                                                                 prev + ', ' + names[index] + curr + '\''  : prev}, undefined)
@@ -114,6 +121,16 @@ class LocalDatabase {
         })    
     }
 
+    incrementTaskCount(personId){
+        let promise =this.myDB(RUN, cmds.incrementTaskCount, [personId])
+        return promise
+    }
+
+    decrementTaskCount(personId){
+        let promise =this.myDB(RUN, cmds.decrementTaskCount, [personId])
+        return promise
+    }
+
     insertPersonData(pData){
         let promise =this.myDB(RUN, cmds.insertPersonData, [getNewId(), pData.name, pData.email, pData.favoriteProgrammingLanguage, 0])
         return promise
@@ -121,7 +138,7 @@ class LocalDatabase {
 
     getPersonDetails(id) {
         let promise = this.myDB(GET, cmds.getPersonDetails, [id])
-        return promise.then(dict => {return dict != undefined ? new PersonDetails(dict) : null}, err => {throw err})  //db returns undifined if the query res is empty
+        return promise.then(dict => { if (dict != undefined){ return new PersonDetails(dict) } else throw 'No such entry'}, err => {throw err}) 
     }
     
     getAllPersonDetails() {
@@ -135,9 +152,11 @@ class LocalDatabase {
     }
 
     removePersondetails(id){
-        let existPromise = this.getPersonDetails(id)                    //checks if recored exist before deletion
-        let deletePromise = existPromise.then(res => {return res != null ? this.myDB(RUN, cmds.removePersondetails, [id]) : null }, err => {throw err} )         
-        return deletePromise
+        let deletePerson = this.myDB(RUN, cmds.removePersondetails, [id])
+        let deleteTasks = deletePerson.then(this.myDB(RUN, cmds.removePersonTasks, [id]))
+        let deleteChores = deleteTasks.then(this.myDB(RUN, cmds.removePersonChore, [id]))
+        let deleteHomework = deleteChores.then(this.myDB(RUN, cmds.removePersonHomework, [id]))
+        return deleteHomework
     }
 
     insertTaskData(ownerId, tData){
@@ -145,13 +164,13 @@ class LocalDatabase {
         let insertPromise
         if (tData.type == "HomeWork") {
             insertPromise = this.myDB(RUN, cmds.insertHomeorkData, [taskId, ownerId, tData.status, tData.course, tData.dueDate, tData.details])
-            insertPromise = insertPromise.then( () => this.myDB(RUN, cmds.insertTaskData, [taskId, 'HomeWork']), err => {throw err})
+            insertPromise = insertPromise.then( () => this.myDB(RUN, cmds.insertTaskData, [taskId, 'HomeWork', ownerId]), err => {throw err})
         } else {
             insertPromise = this.myDB(RUN, cmds.insertChoreData, [taskId, ownerId, tData.status, tData.description, tData.size])
-            insertPromise = insertPromise.then( () => this.myDB(RUN, cmds.insertTaskData, [taskId, 'Chore']), err => {throw err})
+            insertPromise = insertPromise.then( () => this.myDB(RUN, cmds.insertTaskData, [taskId, 'Chore', ownerId]), err => {throw err})
         }
         let updatePromise = tData.status != "Done" ? 
-        insertPromise.then(() => {this.myDB(RUN, cmds.incrementTaskCount ,[ownerId])}, err => {throw err}) :
+        insertPromise.then(res => this.incrementTaskCount(ownerId), err => {throw err}) :
         insertPromise
         
         return updatePromise
@@ -171,46 +190,48 @@ class LocalDatabase {
 
     getTaskDetails(taskId){
         let promise = this.myDB(GET, cmds.getTasktype, [taskId])
-        return promise.then((dict => {return dict.type == 'HomeWork' ? 
+        return promise.then((dict => {if (dict != undefined) {return dict.type == 'HomeWork' ? 
                                                         this.myDB(GET, cmds.getHomeworkDetails, [taskId]).then(dict => new HomeworkDetails(dict)):
-                                                    dict.type == 'Chore' ? 
-                                                    this.myDB(GET, cmds.getChoreDetails, [taskId]).then(dict => new choreDetails(dict)) : 
-                                                    null}))
+                                                            dict.type == 'Chore' ? 
+                                                        this.myDB(GET, cmds.getChoreDetails, [taskId]).then(dict => new choreDetails(dict)) : 
+                                                            'Bad Task type'} else throw 'No such entry' }))
     }
 
     updateTaskDetails(taskId, tData){
-        let promise = this.myDB(GET, cmds.getTasktype, [taskId])
-        return promise.then((dict => {return dict.type == 'HomeWork' ? this.myDB(RUN, parsePatchCmd(taskId, tData, 'HomeWork'), []):
-                                             dict.type == 'Chore' ? this.myDB(RUN, parsePatchCmd(taskId, tData, 'Chore' ), []) : null}))
+        let typePromise = this.myDB(GET, cmds.getTasktype, [taskId])
+        let detailsPromise = typePromise.then((dict => {return dict.type == 'HomeWork' ? this.myDB(GET, cmds.getHomeworkDetails, [taskId]):
+                                                        dict.type == 'Chore' ? this.myDB(GET, cmds.getChoreDetails, [taskId]) : 'Bad task type1'}) )
+        detailsPromise.then(currTask => {if (currTask.status == 'Active' && tData.status == 'Done'){ this.decrementTaskCount(currTask.ownerId)}
+                                                             else if (tData.status == 'Active' && currTask.status == 'Done') {this.incrementTaskCount(currTask.ownerId)}})
+        return typePromise.then((dict => {return dict.type == 'HomeWork' ? this.myDB(RUN, parsePatchCmd(taskId, tData, 'HomeWork'), []):
+                                             dict.type == 'Chore' ? this.myDB(RUN, parsePatchCmd(taskId, tData, 'Chore' ), []) : 'Bad task type2'}))
     }
 
     deleteTaskDetails(taskId){
-        let existPromise = this.myDB(GET, cmds.getTasktype, [taskId]).then(res => {return res == undefined ? null : res})                   //checks if recored exist before deletion
-        let deletePromise = existPromise.then(dict => {return dict == null ? 0 : 
-                                                              dict.type == 'HomeWork' ? this.myDB(RUN, cmds.removeHomeorkdetails, [taskId]):
-                                                              this.myDB(RUN, cmds.removeChoredetails, [taskId])}
-                                                              , err => {throw err} )
-        return deletePromise.then(res => { return res != 0 ? this.myDB(RUN, cmds.removeTaskdetails, [taskId]): null},  err => {throw err})
+        let typePromise = this.myDB(GET, cmds.getTasktype, [taskId])
+        let detailsPromise = typePromise.then((dict => {return dict.type == 'HomeWork' ? this.myDB(GET, cmds.getHomeworkDetails, [taskId]):
+                                                        dict.type == 'Chore' ? this.myDB(GET, cmds.getChoreDetails, [taskId]) : 'Bad task type1'}) )                 //checks if recored exist before deletion
+        let deletePromise = typePromise.then(dict => {return dict.type == 'HomeWork' ? this.myDB(RUN, cmds.removeHomeorkdetails, [taskId]):
+                                                            this.myDB(RUN, cmds.removeChoredetails, [taskId])}, err => {throw err} )
+        deletePromise = deletePromise.then(res => { return this.myDB(RUN, cmds.removeTaskdetails, [taskId])},  err => {throw err})
+        return detailsPromise.then(currTask => { if (currTask.status == 'Active'){this.decrementTaskCount(currTask.ownerId)}},  err => {throw err})
     }
 
     updateTaskStatus(taskId, status){
-        let promise = this.myDB(GET, cmds.getTasktype, [taskId])
-        return promise.then((dict => {return dict.type == 'HomeWork' ? this.myDB(RUN, parsePatchCmd(taskId,{status: status}, 'HomeWork'), []):
-                                             dict.type == 'Chore' ? this.myDB(RUN, parsePatchCmd(taskId, {status: status}, 'Chore' ), []) : null}))
-
+        this.updateTaskDetails(taskId, {status: status})
     }
 
     updateTaskOwner(taskId, ownerId){
-        let promise = this.myDB(GET, cmds.getTasktype, [taskId])
-        return promise.then((dict => {return dict.type == 'HomeWork' ? this.myDB(RUN, parsePatchCmd(taskId,{ownerId: ownerId}, 'HomeWork'), []):
-                                             dict.type == 'Chore' ? this.myDB(RUN, parsePatchCmd(taskId, {ownerId: ownerId}, 'Chore' ), []) : null}))
+        let typePromise = this.myDB(GET, cmds.getTasktype, [taskId])
+        let detailsPromise = typePromise.then((dict => {return dict.type == 'HomeWork' ? this.myDB(GET, cmds.getHomeworkDetails, [taskId]):
+                                                        dict.type == 'Chore' ? this.myDB(GET, cmds.getChoreDetails, [taskId]) : 'Bad task type1'}) )
+        detailsPromise.then(currTask => {if (currTask.status == 'Active'){this.decrementTaskCount(currTask.ownerId)
+                                                                          this.incrementTaskCount(ownerId)}})
+        return this.updateTaskDetails(taskId, {ownerId: ownerId})
     }
 
 
 }
-
-//TODO:
-//- patch params are optional, need to check active tasks count
 
 
 
@@ -234,11 +255,20 @@ function insertTasks(ownerid){
 
 
 const myLocalDatabase = new LocalDatabase();
-insertPersones();
+//insertPersones();
 //printRes(myLocalDatabase.getAllPersonDetails());
-//insertTasks('3e846dd4cad0b2abdc48')
-//printRes(myLocalDatabase.getPersonTaskdetails('3e846dd4cad0b2abdc48'))
-//printRes(myLocalDatabase.getTaskDetails('6cf9f6bca2cc3f6e6ec4'))
+//insertTasks('611e87de3da243654f8b')
+//printRes(myLocalDatabase.getPersonDetails('695a89ac935e2a281f60'))
+//printRes(myLocalDatabase.getTaskDetails('ae7974808a2f2b7ea345'))
+//printRes(myLocalDatabase.getPersonTaskdetails('611e87de3da243654f8b'))
+//printRes(myLocalDatabase.getPersonTaskdetails('33f06a97a20171333c1b'))
+//tData3 = new TaskData("Chore", 'Active', undefined, undefined, undefined, "hard task2", "Large2")
+//myLocalDatabase.deleteTaskDetails('25681de2f56ac7c14323')
+//myLocalDatabase.updateTaskDetails('9e5d5caafb8450efd2c2', tData3)
+//myLocalDatabase.incrementTaskCount('950f87742b97adfd3072')
+//myLocalDatabase.removePersondetails('ae7974808a2f2b7ea345')
+//myLocalDatabase.updateTaskStatus('3f7c44d134978d6194b6', 'Active')
+//myLocalDatabase.updateTaskOwner('ac2df1c54d3679aad457', '611e87de3da243654f8b')
 // tData1 = new TaskData("HomeWork", "Done", undefined, "10.05.4230", "my details", undefined, undefined)
 // tData2 = new TaskData("Chore", "Done", undefined, undefined, undefined, "hard task vey",undefined)
 // pData1 = new PersonData(undefined, "talangus@f2.com22222", "python32222")
