@@ -13,4 +13,8 @@ class HomeworkDetails extends TaskDetails {
     }
 }
 
+<<<<<<< HEAD
 module.exports = HomeworkDetails;
+=======
+module.exports = HomeworkDetails
+>>>>>>> 95f719489bfd4e93b43c7d05d2875d7a0c9b2103
