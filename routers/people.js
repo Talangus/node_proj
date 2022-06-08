@@ -22,7 +22,7 @@ peopleRouter.post('/', (req, res) => {
 
 peopleRouter.get('/:id', (req, res) => {
     db.getPersonDetails(req.params.id)
-    .then(data => data ? res.send(data) : res.send("A person with the id does not exists.")); //(throw error if doesn't exist)
+    .then(data => data ? res.send(data) : res.status(400).send("A person with the id does not exists.")); //(throw error if doesn't exist)
 });
 
 peopleRouter.patch('/:id', (req, res) => {
@@ -37,8 +37,8 @@ peopleRouter.delete('/:id', (req, res) => {
   /* check id exists */
   db.removePersondetails(req.params.id)
   .then(data => data ? res.send('Person removed successfully.') : 
-  res.status(404).send('A person with the id '+req.params.id+' does not exist.'))
-.catch(()=> res.send('A person with the id '+req.params.id+' does not exist.'));
+                        res.status(404).send('A person with the id '+req.params.id+' does not exist.'))
+  .catch(()=> res.send('A person with the id '+req.params.id+' does not exist.'));
 }); //throws error if dosent exist
 
 peopleRouter.get('/:id/tasks/', (req, res) => {

@@ -6,14 +6,12 @@ const TaskDetails = require('../modules/TaskDetails');
 const db = require('../db');
 const tasksRouter = express.Router();
 
-
-
 tasksRouter.get('/:id', (req, res) => {
     /* check id exists */
-    db.getTaskDetails(req.params.id).then(data => data ? res.send(data) : res.status(400).send('not found'));
+    db.getTaskDetails(req.params.id)
+        .then(data => data ? res.send(data) : 
+                            res.status(400).send('A task with the id '+req.body.id+' does not exist.'));
 });
-    // db.getTaskDetails(id) 
-
 
 tasksRouter.patch('/:id', (req, res) => {
     /* check id exists */
@@ -39,18 +37,17 @@ tasksRouter.patch('/:id', (req, res) => {
     }
 }); 
 
-
 tasksRouter.delete('/:id', (req, res) => {
     /* check id exists */
-    db.deleteTaskDetails(req.body);
+    db.deleteTaskDetails(req.params.id)
+        .then(() => res.send('Task removed successfully.'))
+        .catch(res.send('A task with the id '+req.params.id+' does not exist.'));
 });
-
 
 tasksRouter.get('/:id/status', (req, res) => {
     /* check id exists */
+    
 });
-    //db.getTaskdetails(id) returns tasksDetails
-
 
 tasksRouter.put(':id/status', (req, res) => {
     /* check id exists */
@@ -58,12 +55,10 @@ tasksRouter.put(':id/status', (req, res) => {
 });
     //db.updateTaskStatus(id, status)
 
-
 tasksRouter.get('/:id/owner', (req, res) => {
     /* check id exists */
 });
     //db.getTaskdetails(id)
-
 
 tasksRouter.put('/:id/owner', (req, res) => {
     /* check task id and owner id exists */
