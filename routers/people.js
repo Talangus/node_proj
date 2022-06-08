@@ -44,8 +44,8 @@ peopleRouter.delete('/:id', (req, res) => {
   db.getPersonDetails(req.params.id)
     .then(() => 
       db.removePersondetails(req.params.id)
-        .then(() => res.send('Person removed successfully.')),
-              () => res.status(404).send('A person with the id '+req.params.id+' does not exist.'),
+        .then(() => res.send('Person removed successfully.'),
+              () => res.status(404).send('A person with the id '+req.params.id+' does not exist.')),
           err => res.status(400).send(err));
 }); //throws error if dosent exist
 
