@@ -9,8 +9,8 @@ const tasksRouter = express.Router();
 tasksRouter.get('/:id', (req, res) => {
     /* check id exists */
     db.getTaskDetails(req.params.id)
-        .then(data => data ? res.send(data) : 
-                            res.status(400).send('A task with the id '+req.body.id+' does not exist.'));
+        .then(data => res.send(data),
+                () => res.status(404).send("A task with the id '"+req.params.id+"' does not exist."));
 });
 
 tasksRouter.patch('/:id', (req, res) => {
@@ -46,23 +46,35 @@ tasksRouter.delete('/:id', (req, res) => {
 
 tasksRouter.get('/:id/status', (req, res) => {
     /* check id exists */
-    
+    db.getTaskDetails(req.params.id)
+    .then(succ => res.status(200).send(succ.status),
+            () => res.status(404).send("A task with the id '"+req.params.id+"' does not exist."));
 });
 
 tasksRouter.put(':id/status', (req, res) => {
     /* check id exists */
     /* check status is valid */
+    if(req.body != 'active' && req.body !='done')
+        res.status(400).send("value '"+req.body+"' is not a legal task status.");
+    else{
+        db.updateTaskStatus(req.body).then(
+            () => res.status(204).send("task's status updated successfully."),
+            () => res.status(404).send("A task with the id '"+req.params.id+"' does not exist."));
+    }
 });
-    //db.updateTaskStatus(id, status)
 
 tasksRouter.get('/:id/owner', (req, res) => {
     /* check id exists */
+    db.getTaskDetails(req.params.id).then(
+        succ => res.status(200).send(succ.owner),
+        () => res.status(404).send("A task with the id '"+req.params.id+"' does not exist."));
 });
-    //db.getTaskdetails(id)
 
 tasksRouter.put('/:id/owner', (req, res) => {
     /* check task id and owner id exists */
+    db.updateTaskOwner(req.body).then(
+        () => res.status(204).send("task's owner updated successfully."),
+        () => res.status(404).send("A task with the id '"+req.params.id+"' does not exist."));
 });
-    //db.updateTaskOwner(taskid, Ownerid )
 
 module.exports = tasksRouter;
