@@ -18,20 +18,22 @@ tasksRouter.patch('/:id', (req, res) => {
     /* type and its fildes are compatible */
     /* if all fildes are empty - return 200 */
     //returns TaskDetails
+    if(!req.body)
+        res.status(200).send("task's status updated successfully.");
     db.getTaskDetails(req.params.id)
         .then(() => {
             if (req.body.type === 'HomeWork'){
                 if (req.body.size != undefined || req.body.description != null)
                     res.status(400).send('Invalid task details');
                 else
-                    db.updateTaskDetails(req.body).then(data => res.send(data),
+                    db.updateTaskDetails(req.body).then(() => res.send("task's status updated successfully."),
                                                         err => res.status(400).res(err)); 
             }
             else if (req.body.type === 'Chore'){
                 if (req.body.dueDate != undefined || req.body.course != undefined || req.body.details != undefined)
                     res.status(400).send('Invalid task details');
                 else
-                    db.updateTaskDetails(req.body).then(data => res.send(data),
+                    db.updateTaskDetails(req.body).then(() => res.send("task's status updated successfully."),
                                                         err => res.status(400).res(err));
             }
             else {
