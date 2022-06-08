@@ -234,7 +234,7 @@ function insertTasks(ownerid){
 
 
 const myLocalDatabase = new LocalDatabase();
-insertPersones();
+//insertPersones();
 //printRes(myLocalDatabase.getAllPersonDetails());
 //insertTasks('3e846dd4cad0b2abdc48')
 //printRes(myLocalDatabase.getPersonTaskdetails('3e846dd4cad0b2abdc48'))

@@ -37,18 +37,22 @@ peopleRouter.patch('/:id', (req, res) => {
 peopleRouter.delete('/:id', (req, res) => {
   /* check id exists */
   db.removePersondetails(req.params.id)
-    .then()
-    .catch();
+    .then(res.send('Person removed successfully.'))
+    .catch(res.send('A person with the id '+req.params.id+'does not exist.'));
 }); //throws error if dosent exist
 
-peopleRouter.get('/:id/tasks', (req, res) => {
+peopleRouter.get('/:id/tasks/', (req, res) => {
   /* check id exists */
   /* add to url optional status and check if it's Active/Done only */
+  const status = req.query.status;
+  if(status)
 }); // 
   //db.getPersonTaskdetails(id, status (optional)) /returns tasks of person
 
 
-peopleRouter.post('/:id/tasks', (req, res) => {});
+peopleRouter.post('/:id/tasks/?status', (req, res) => {
+
+});
   /* check id exists */
   /* is status is invalid - error ? ask michael */
   /* check all fildes exists and not null (extra values?) , different tasks - different fildes */
