@@ -17,14 +17,16 @@ peopleRouter.post('/', (req, res) => {
   /* check all fildes exists and not null (extra values?) */
   const newPerson = new PersonData(req.body.name, req.body.emails, req.body.favoriteProgrammingLanguage); 
   db.insertPersonData(newPerson)
-    .then(() => res.status(201).send('Person created successfully'),
-          () => res.status(400).send("A person with email '"+req.body.emails+"' already exists.")); //-if email exist throws error;
+    .then(() => { res.setHeader('Location','');
+                  res.setHeader('x-Created-Id',req.params.id);
+                  res.status(201).send('Person created successfully');  },
+          () => res.status(404).send("A person with email '"+req.body.emails+"' already exists.")); //-if email exist throws error;
  });
 
 peopleRouter.get('/:id', (req, res) => {
   db.getPersonDetails(req.params.id)
     .then(data => res.send(data),
-          () => res.status(400).send("A person with the id does not exists.")); //(throw error if doesn't exist)
+          () => res.status(404).send("A person with email '"+req.body.emails+"' already exists.")); //(throw error if doesn't exist)
 });
 
 peopleRouter.patch('/:id', (req, res) => {
@@ -35,7 +37,7 @@ peopleRouter.patch('/:id', (req, res) => {
       db.updatePersonDetails(req.params.id, req.body)
         .then(() => res.send('Person updated successfully. Response body contains updated data.'),
               () => res.status(404).end),
-          () => res.status(400).send("A person with the id does not exists."));
+          () => res.status(404).send("A person with email '"+req.body.emails+"' already exists."));
 }); //complete patch 
 
 
@@ -63,7 +65,7 @@ peopleRouter.get('/:id/tasks/', (req, res) => {
           .catch(err => console.log(err));
       }
     },
-    () => res.send('A person with the id '+req.params.id+' does not exist.'));
+    () => res.status(404).send("A person with email '"+req.body.emails+"' already exists."));
   });
 
 
@@ -81,8 +83,10 @@ peopleRouter.post('/:id/tasks/', (req, res) => {
         res.status(404).send('Invalid task fields.');
       else {
         db.insertTaskData(req.params.id, req.body)
-        .then(() => res.send('Task created and assigned successfully'),
-        err => res.send(err));
+        .then(() => { res.setHeader('Location','');
+                      res.setHeader('x-Created-Id','');
+                      res.send('Task created and assigned successfully'); },
+              err => res.send(err));
       }
     }
     if (type === 'HomeWork'){
@@ -91,12 +95,14 @@ peopleRouter.post('/:id/tasks/', (req, res) => {
         res.status(404).send('Invalid task fields.');
       else {
         db.insertTaskData(req.params.id, req.body)
-        .then(data => res.send('Task created and assigned successfully'))
-        .catch(err => console.log(err));
+        .then(() => { res.setHeader('Location','');
+                      res.setHeader('x-Created-Id','');
+                      res.send('Task created and assigned successfully'); },
+              err => res.send(err));
       }
     }
   },
-  () => res.send('A person with the id '+req.params.id+' does not exist.'));
+  () => res.status(404).send("A person with email '"+req.body.emails+"' already exists."));
 });
 
 module.exports = peopleRouter;
