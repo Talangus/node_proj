@@ -17,9 +17,9 @@ peopleRouter.post('/', (req, res) => {
   /* check all fildes exists and not null (extra values?) */
   const newPerson = new PersonData(req.body.name, req.body.emails, req.body.favoriteProgrammingLanguage); 
   db.insertPersonData(newPerson)
-    .then(() => { res.setHeader('Location','');
-                  res.setHeader('x-Created-Id',req.params.id);
-                  res.status(201).send('Person created successfully');  },
+    .then(data => { res.setHeader('Location','http://localhost:3000/api/people/person_id');
+                    res.setHeader('x-Created-Id','person id');
+                    res.status(201).send('Person created successfully');  },
           () => res.status(404).send("A person with email '"+req.body.emails+"' already exists.")); //-if email exist throws error;
  });
 
@@ -83,8 +83,8 @@ peopleRouter.post('/:id/tasks/', (req, res) => {
         res.status(404).send('Invalid task fields.');
       else {
         db.insertTaskData(req.params.id, req.body)
-        .then(() => { res.setHeader('Location','');
-                      res.setHeader('x-Created-Id','');
+        .then(() => { res.setHeader('Location','http://localhost:3000/api/tasks/task_id');
+                      res.setHeader('x-Created-Id','task id');
                       res.send('Task created and assigned successfully'); },
               err => res.send(err));
       }

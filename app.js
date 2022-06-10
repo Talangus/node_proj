@@ -17,5 +17,5 @@ app.use('/api/people', peopleRouter);
 app.use('/api/tasks', tasksRouter);
 
 app.listen(port, 'localhost', () => {
-    console.log('listening for requests on port 3000');
-  });
+    console.log('listening for requests on port ' + port);
+});
