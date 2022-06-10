@@ -132,8 +132,9 @@ class LocalDatabase {
     }
 
     insertPersonData(pData){
-        let promise =this.myDB(RUN, cmds.insertPersonData, [getNewId(), pData.name, pData.email, pData.favoriteProgrammingLanguage, 0])
-        return promise
+        let id = getNewId()
+        let promise =this.myDB(RUN, cmds.insertPersonData, [id, pData.name, pData.email, pData.favoriteProgrammingLanguage, 0])
+        return promise.then( _ => id , err => {throw err})
     }
 
     getPersonDetails(id) {
@@ -173,7 +174,7 @@ class LocalDatabase {
         insertPromise.then(res => this.incrementTaskCount(ownerId), err => {throw err}) :
         insertPromise
         
-        return updatePromise
+        return updatePromise.then(_ => taskId, err => {throw err})
     }
 
     getPersonTaskdetails(ownerId, status){
@@ -233,53 +234,6 @@ class LocalDatabase {
 
 }
 
-
-
-function printRes (promise) { promise.then(result => console.log(util.inspect(result,false, null))) }
-function insertPersones () {
-    pData1 = new PersonData("tal", "talangus@f.com", "python")
-    pData2 = new PersonData("tal2", "talangus@f2.com", "python3")
-    myLocalDatabase.insertPersonData(pData1)
-    myLocalDatabase.insertPersonData(pData2)
-}
-function insertTasks(ownerid){
-    tData1 = new TaskData("Chore", "Active", undefined, undefined, undefined, "hard task", "Large")
-    tData2 = new TaskData("HomeWork", "Active", "101", "10.05.10", "my details", undefined, undefined)
-    tData3 = new TaskData("Chore", "Done", undefined, undefined, undefined, "hard task", "Large")
-    tData4 = new TaskData("HomeWork", "Active", "102", "10.05.10", "my details", undefined, undefined)
-    myLocalDatabase.insertTaskData(ownerid, tData1)
-    myLocalDatabase.insertTaskData(ownerid, tData2)
-    myLocalDatabase.insertTaskData(ownerid, tData3)
-    myLocalDatabase.insertTaskData(ownerid, tData4)
-}
-
-
 const myLocalDatabase = new LocalDatabase();
-//insertPersones();
-//printRes(myLocalDatabase.getAllPersonDetails());
-//insertTasks('611e87de3da243654f8b')
-//printRes(myLocalDatabase.getPersonDetails('695a89ac935e2a281f60'))
-//printRes(myLocalDatabase.getTaskDetails('ae7974808a2f2b7ea345'))
-//printRes(myLocalDatabase.getPersonTaskdetails('611e87de3da243654f8b'))
-//printRes(myLocalDatabase.getPersonTaskdetails('33f06a97a20171333c1b'))
-//tData3 = new TaskData("Chore", 'Active', undefined, undefined, undefined, "hard task2", "Large2")
-//myLocalDatabase.deleteTaskDetails('25681de2f56ac7c14323')
-//myLocalDatabase.updateTaskDetails('9e5d5caafb8450efd2c2', tData3)
-//myLocalDatabase.incrementTaskCount('950f87742b97adfd3072')
-//myLocalDatabase.removePersondetails('ae7974808a2f2b7ea345')
-//myLocalDatabase.updateTaskStatus('3f7c44d134978d6194b6', 'Active')
-//myLocalDatabase.updateTaskOwner('ac2df1c54d3679aad457', '611e87de3da243654f8b')
-// tData1 = new TaskData("HomeWork", "Done", undefined, "10.05.4230", "my details", undefined, undefined)
-// tData2 = new TaskData("Chore", "Done", undefined, undefined, undefined, "hard task vey",undefined)
-// pData1 = new PersonData(undefined, "talangus@f2.com22222", "python32222")
-//myLocalDatabase.updatePersonDetails('383ec869afe6dbeda318', pData1)
-//myLocalDatabase.updateTaskDetails('c6349ff2a32cf3c135d9', tData2)
-//printRes(myLocalDatabase.getTaskDetails('74d2e957accedd6a27e7'))
-//myLocalDatabase.updateTaskStatus('74d2e957accedd6a27e7', 'Done')
-//myLocalDatabase.updateTaskOwner('74d2e957accedd6a27e7', '2055')
-//console.log(parsePatchCmd('d66812808abd6dca79ea', tData1, 'HomeWork'))
-//printRes(myLocalDatabase.deleteTaskDetails2('eab0f1a4d20a3870ff55'))
-//printRes(myLocalDatabase.removePersondetails('ed461887e9f633df4d0d'))
-
 module.exports = myLocalDatabase;            //we export one instance - a singelton
 
