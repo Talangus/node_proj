@@ -149,7 +149,7 @@ class LocalDatabase {
 
     updatePersonDetails(id, pData){
         let promise = this.myDB(RUN, parsePatchCmd(id, pData, 'person'), [])
-        return promise
+        return promise.then(_ => this.getPersonDetails(id), err => {throw err})
     }
 
     removePersondetails(id){
@@ -204,8 +204,8 @@ class LocalDatabase {
                                                         dict.type == 'Chore' ? this.myDB(GET, cmds.getChoreDetails, [taskId]) : 'Bad task type1'}) )
         detailsPromise.then(currTask => {if (currTask.status == 'Active' && tData.status == 'Done'){ this.decrementTaskCount(currTask.ownerId)}
                                                              else if (tData.status == 'Active' && currTask.status == 'Done') {this.incrementTaskCount(currTask.ownerId)}})
-        return typePromise.then((dict => {return dict.type == 'HomeWork' ? this.myDB(RUN, parsePatchCmd(taskId, tData, 'HomeWork'), []):
-                                             dict.type == 'Chore' ? this.myDB(RUN, parsePatchCmd(taskId, tData, 'Chore' ), []) : 'Bad task type2'}))
+        return typePromise.then((dict => {if (dict.type == 'HomeWork') {this.myDB(RUN, parsePatchCmd(taskId, tData, 'HomeWork'), []); return this.getTaskDetails(taskId);}
+                                            else if (dict.type == 'Chore') {this.myDB(RUN, parsePatchCmd(taskId, tData, 'Chore' ), []); return this.getTaskDetails(taskId); } else {'Bad task type2'}}))
     }
 
     deleteTaskDetails(taskId){

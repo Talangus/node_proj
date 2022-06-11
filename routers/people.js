@@ -15,29 +15,37 @@ peopleRouter.get('/', (req, res) => {
 
 peopleRouter.post('/', (req, res) => {
   /* check all fildes exists and not null (extra values?) */
-  const newPerson = new PersonData(req.body.name, req.body.emails, req.body.favoriteProgrammingLanguage); 
-  db.insertPersonData(newPerson)
-    .then(data => { res.setHeader('Location','http://localhost:3000/api/people/person_id');
-                    res.setHeader('x-Created-Id','person id');
-                    res.status(201).send('Person created successfully');  },
-          () => res.status(404).send("A person with email '"+req.body.emails+"' already exists.")); //-if email exist throws error;
+  if (req.body.name == undefined || req.body.email == undefined || req.body.favoriteProgrammingLanguage == undefined)
+    res.status(400).send('Required data fields are missing');
+  else{
+    const newPerson = new PersonData(req.body.name, req.body.email, req.body.favoriteProgrammingLanguage); 
+    db.insertPersonData(newPerson)
+      .then(person_id => {res.header('Location', 'http://localhost:3000/api/people/' + person_id);
+                          res.header('x-Created-Id', person_id);
+                          res.status(201).send('Person created successfully');  },
+            () => res.status(400).send("A person with email '"+req.body.email+"' already exists.")); //-if email exist throws error;
+  }
  });
 
 peopleRouter.get('/:id', (req, res) => {
   db.getPersonDetails(req.params.id)
     .then(data => res.send(data),
-          () => res.status(404).send("A person with email '"+req.body.emails+"' already exists.")); //(throw error if doesn't exist)
+          () => res.status(404).send("A person with the id '"+req.params.id+"' does not exist.")); //(throw error if doesn't exist)
 });
 
 peopleRouter.patch('/:id', (req, res) => {
   /* check id exists */
   /* if all fildes are empty - return 200 */
   db.getPersonDetails(req.params.id)
-    .then(() => 
-      db.updatePersonDetails(req.params.id, req.body)
-        .then(() => res.send('Person updated successfully. Response body contains updated data.'),
-              () => res.status(404).end),
-          () => res.status(404).send("A person with email '"+req.body.emails+"' already exists."));
+    .then(data => {
+      if (req.body.name == undefined && req.body.email == undefined && req.body.favoriteProgrammingLanguage == undefined)
+        res.status(200).send(data);
+      else {
+        db.updatePersonDetails(req.params.id, req.body)
+          .then(pData => res.send(pData),
+                () => res.status(400).send("A person with email '"+req.body.email+"' already exists.")) }
+      },
+      () => res.status(404).send("A person with the id '"+req.params.id+"' does not exist."));
 }); //complete patch 
 
 
@@ -47,8 +55,8 @@ peopleRouter.delete('/:id', (req, res) => {
     .then(() => 
       db.removePersondetails(req.params.id)
         .then(() => res.send('Person removed successfully.'),
-              () => res.status(404).send('A person with the id '+req.params.id+' does not exist.')),
-          err => res.status(400).send(err));
+              () => res.status(400).end()),
+          () => res.status(404).send("A person with the id '"+req.params.id+"' does not exist."));
 }); //throws error if dosent exist
 
 peopleRouter.get('/:id/tasks/', (req, res) => {
@@ -65,7 +73,7 @@ peopleRouter.get('/:id/tasks/', (req, res) => {
           .catch(err => console.log(err));
       }
     },
-    () => res.status(404).send("A person with email '"+req.body.emails+"' already exists."));
+    () => res.status(404).send("A person with the id '"+req.params.id+"' does not exist."));
   });
 
 
@@ -79,30 +87,38 @@ peopleRouter.post('/:id/tasks/', (req, res) => {
     const type = req.body.type;
     if (type === 'Chore'){
       if (req.body.description == undefined || req.body.size == undefined ||
-          (req.body.status != 'Active' && req.body.status != 'Done' && req.body.status != undefined))
-        res.status(404).send('Invalid task fields.');
+          (req.body.status != 'Active' && req.body.status != 'Done' && req.body.status != undefined) ||
+          (req.body.size != undefined && req.body.size != 'Large' && req.body.size != 'Medium' && req.body.size != 'Small'))
+        res.status(400).send('Required data fields are missing, data makes no sense, or data contains illegal values.');
       else {
+        if (req.body.status == undefined)
+          req.body.status = 'Active';
         db.insertTaskData(req.params.id, req.body)
-        .then(() => { res.setHeader('Location','http://localhost:3000/api/tasks/task_id');
-                      res.setHeader('x-Created-Id','task id');
-                      res.send('Task created and assigned successfully'); },
+        .then(task_id => {res.header('Location', 'http://localhost:3000/api/tasks/' + task_id);
+                          res.header('x-Created-Id', task_id);
+                          res.status(201).send('Task created and assigned successfully'); },
               err => res.send(err));
       }
     }
-    if (type === 'HomeWork'){
-      if (req.body.course == undefined || req.body.details == undefined || req.body.dueDate == undefined
+    else if (type === 'HomeWork'){
+      if (req.body.course == undefined || req.body.details == undefined || req.body.dueDate == undefined ||
           (req.body.status != 'Active' && req.body.status != 'Done' && req.body.status != undefined))
-        res.status(404).send('Invalid task fields.');
+        res.status(400).send('Required data fields are missing, data makes no sense, or data contains illegal values.');
       else {
+        if (req.body.status == undefined)
+          req.body.status = 'Active';
         db.insertTaskData(req.params.id, req.body)
         .then(() => { res.setHeader('Location','');
                       res.setHeader('x-Created-Id','');
-                      res.send('Task created and assigned successfully'); },
+                      res.status(201).send('Task created and assigned successfully'); },
               err => res.send(err));
       }
     }
+    else {
+      res.status(400).send('Required data fields are missing, data makes no sense, or data contains illegal values.');
+    }
   },
-  () => res.status(404).send("A person with email '"+req.body.emails+"' already exists."));
+  () => res.status(404).send("A person with the id '"+req.params.id+"' does not exist."));
 });
 
 module.exports = peopleRouter;
