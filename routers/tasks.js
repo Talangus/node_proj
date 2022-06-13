@@ -74,11 +74,11 @@ tasksRouter.delete('/:id', (req, res) => {
 tasksRouter.get('/:id/status', (req, res) => {
     /* check id exists */
     db.getTaskDetails(req.params.id).then(
-        data => res.status(200).send(data.status),
+        data => res.status(200).json(data.status),
         () => res.status(404).send("A task with the id '"+req.params.id+"' does not exist."));
 });
 
-tasksRouter.put(':id/status', (req, res) => {
+tasksRouter.put('/:id/status', (req, res) => {
     /* check id exists */
     /* check status is valid */
     db.getTaskDetails(req.params.id)
@@ -97,7 +97,7 @@ tasksRouter.put(':id/status', (req, res) => {
 tasksRouter.get('/:id/owner', (req, res) => {
     /* check id exists */
     db.getTaskDetails(req.params.id).then(
-        data => res.status(200).send(data.owner),
+        data => res.status(200).json(data.owner),
         () => res.status(404).send("A task with the id '"+req.params.id+"' does not exist."));
 });
 
