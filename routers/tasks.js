@@ -109,7 +109,7 @@ tasksRouter.put('/:id/owner', (req, res) => {
         .then(() => {
         db.updateTaskOwner(req.params.id, req.body).then(
             () => res.status(204).send("task's owner updated successfully."),
-            () => {res.status(400).send("person with id '"+req.body+"' does not exist.")});
+            () => {res.status(404).send("person with id '"+req.body+"' does not exist.")});
         },
     () => res.status(404).send("A task with the id '"+req.params.id+"' does not exist."));;
 });
