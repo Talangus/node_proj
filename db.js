@@ -70,6 +70,7 @@ const cmds = {
 for (var key in tables){
        db.run(tables[key])
 }
+db.run("PRAGMA foreign_keys = ON")
 
 let getNewId = () => crypto.randomBytes(10).toString('hex')
 
@@ -204,8 +205,8 @@ class LocalDatabase {
                                                         dict.type == 'Chore' ? this.myDB(GET, cmds.getChoreDetails, [taskId]) : 'Bad task type1'}) )
         detailsPromise.then(currTask => {if (currTask.status == 'Active' && tData.status == 'Done'){ this.decrementTaskCount(currTask.ownerId)}
                                                              else if (tData.status == 'Active' && currTask.status == 'Done') {this.incrementTaskCount(currTask.ownerId)}})
-        return typePromise.then((dict => {if (dict.type == 'HomeWork') {this.myDB(RUN, parsePatchCmd(taskId, tData, 'HomeWork'), []); return this.getTaskDetails(taskId);}
-                                            else if (dict.type == 'Chore') {this.myDB(RUN, parsePatchCmd(taskId, tData, 'Chore' ), []); return this.getTaskDetails(taskId); } else {'Bad task type2'}}))
+        return typePromise.then((dict => {if (dict.type == 'HomeWork') {return this.myDB(RUN, parsePatchCmd(taskId, tData, 'HomeWork'), []).then(()=> this.getTaskDetails(taskId), err => {throw err})}
+                                            else if (dict.type == 'Chore') { return this.myDB(RUN, parsePatchCmd(taskId, tData, 'Chore' ), []).then(()=> this.getTaskDetails(taskId), err => {throw err})} else {'Bad task type2'}}))
     }
 
     deleteTaskDetails(taskId){
@@ -219,7 +220,7 @@ class LocalDatabase {
     }
 
     updateTaskStatus(taskId, status){
-        this.updateTaskDetails(taskId, {status: status})
+        return this.updateTaskDetails(taskId, {status: status})
     }
 
     updateTaskOwner(taskId, ownerId){
