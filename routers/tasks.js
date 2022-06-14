@@ -26,7 +26,7 @@ tasksRouter.patch('/:id', (req, res) => {
                 if (req.body.size != undefined || req.body.description != null)
                     res.status(400).send('Invalid task details');
                 else
-                    db.updateTaskDetails(req.body).then(() => res.send("task's status updated successfully."),
+                    db.updateTaskDetails(req.params.id, req.body).then(() => res.send("task's status updated successfully."),
                                                         err => res.status(400).res(err)); 
             }
             else if (req.body.type === 'Chore'){

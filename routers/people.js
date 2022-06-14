@@ -90,7 +90,7 @@ peopleRouter.post('/:id/tasks/', (req, res) => {
       }
     }
     if (type === 'HomeWork'){
-      if (req.body.course == undefined || req.body.details == undefined || req.body.dueDate == undefined
+      if (req.body.course == undefined || req.body.details == undefined || req.body.dueDate == undefined ||
           (req.body.status != 'Active' && req.body.status != 'Done' && req.body.status != undefined))
         res.status(404).send('Invalid task fields.');
       else {
