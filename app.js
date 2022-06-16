@@ -6,7 +6,7 @@ const port = 3000;
 const peopleRouter = require('./routers/people');
 const tasksRouter = require('./routers/tasks');
 
-app.use(bodyParser.json());
+app.use(bodyParser.json({strict: false}));
 app.use(bodyParser.urlencoded({
     extended: true
 }));

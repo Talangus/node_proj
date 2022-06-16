@@ -5,6 +5,8 @@ const TaskData = require('../modules/TaskData');
 const TaskDetails = require('../modules/TaskDetails');
 const db = require('../db');
 const tasksRouter = express.Router();
+const bodyParser = require('body-parser');
+
 
 tasksRouter.get('/:id', (req, res) => {
     /* check id exists */
@@ -83,10 +85,10 @@ tasksRouter.put('/:id/status', (req, res) => {
     /* check status is valid */
     db.getTaskDetails(req.params.id)
         .then(() => {
-            if(req.body != 'active' && req.body !='done')
-                res.status(400).send("value '"+req.body+"' is not a legal task status.");
+            if(req.body != 'Active' && req.body !='Done')
+                res.status(400).send("value "+req.body+" is not a legal task status.");
             else{
-                db.updateTaskStatus(req.body).then(
+                db.updateTaskStatus(req.params.id, req.body).then(
                     () => res.status(204).send("task's status updated successfully."),
                     () => res.status(404).send("A task with the id '"+req.params.id+"' does not exist."));
             }
@@ -105,9 +107,9 @@ tasksRouter.put('/:id/owner', (req, res) => {
     /* check task id and owner id exists */
     db.getTaskDetails(req.params.id)
         .then(() => {
-        db.updateTaskOwner(req.body).then(
+        db.updateTaskOwner(req.params.id, req.body).then(
             () => res.status(204).send("task's owner updated successfully."),
-            () => res.status(404).send("A task with the id '"+req.params.id+"' does not exist."));
+            () => {res.status(404).send("person with id '"+req.body+"' does not exist.")});
         },
     () => res.status(404).send("A task with the id '"+req.params.id+"' does not exist."));;
 });
