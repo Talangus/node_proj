@@ -82,7 +82,6 @@ peopleRouter.post('/:id/tasks/', (req, res) => {
   /* check id exists */
   /* is status is invalid - error ? ask michael */
   /* check all fildes exists and not null (extra values?) , different tasks - different fildes */
-
   db.getPersonDetails(req.params.id).then(() => { 
     const type = req.body.type;
     if (type === 'Chore'){
@@ -90,6 +89,7 @@ peopleRouter.post('/:id/tasks/', (req, res) => {
           (req.body.status != 'Active' && req.body.status != 'Done' && req.body.status != undefined) ||
           (req.body.size != undefined && req.body.size != 'Large' && req.body.size != 'Medium' && req.body.size != 'Small'))
         res.status(400).send('Required data fields are missing, data makes no sense, or data contains illegal values.');
+        // ? ask Tal - seprate error messages for any of bad request ? 
       else {
         if (req.body.status == undefined)
           req.body.status = 'Active';
@@ -101,16 +101,18 @@ peopleRouter.post('/:id/tasks/', (req, res) => {
       }
     }
     else if (type === 'HomeWork'){
+      const isValidDate = (date) => (new Date(date) !== "Invalid Date") && !isNaN(Date.parse(date));
       if (req.body.course == undefined || req.body.details == undefined || req.body.dueDate == undefined ||
-          (req.body.status != 'Active' && req.body.status != 'Done' && req.body.status != undefined))
+          (req.body.status != 'Active' && req.body.status != 'Done' && req.body.status != undefined) || 
+          !isValidDate(req.body.dueDate))
         res.status(400).send('Required data fields are missing, data makes no sense, or data contains illegal values.');
       else {
         if (req.body.status == undefined)
           req.body.status = 'Active';
         db.insertTaskData(req.params.id, req.body)
-        .then(() => { res.setHeader('Location','');
-                      res.setHeader('x-Created-Id','');
-                      res.status(201).send('Task created and assigned successfully'); },
+        .then(task_id => {res.header('Location', 'http://localhost:3000/api/tasks/' + task_id);
+                          res.header('x-Created-Id', task_id);
+                          res.status(201).send('Task created and assigned successfully'); },
               err => res.send(err));
       }
     }
@@ -122,9 +124,3 @@ peopleRouter.post('/:id/tasks/', (req, res) => {
 });
 
 module.exports = peopleRouter;
-
-
-/* TODO:
-errors catch 
-emails vs. email - ask michael
- */
