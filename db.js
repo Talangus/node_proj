@@ -234,6 +234,29 @@ class LocalDatabase {
 
 }
 
+function printRes (promise) { promise.then(result => console.log(util.inspect(result,false, null))) }
+function insertPersones () {
+    pData1 = new PersonData("tal", "talangus@f.com", "python")
+    pData2 = new PersonData("tal2", "talangus@f2.com", "python3")
+    myLocalDatabase.insertPersonData(pData1)
+    myLocalDatabase.insertPersonData(pData2)
+}
+function insertTasks(ownerid){
+    tData1 = new TaskData("Chore", "Active", undefined, undefined, undefined, "hard task", "Large")
+    tData2 = new TaskData("HomeWork", "Active", "101", "10.05.10", "my details", undefined, undefined)
+    tData3 = new TaskData("Chore", "Done", undefined, undefined, undefined, "hard task", "Large")
+    tData4 = new TaskData("HomeWork", "Active", "102", "10.05.10", "my details", undefined, undefined)
+    myLocalDatabase.insertTaskData(ownerid, tData1)
+    myLocalDatabase.insertTaskData(ownerid, tData2)
+    myLocalDatabase.insertTaskData(ownerid, tData3)
+    myLocalDatabase.insertTaskData(ownerid, tData4)
+}
+
+
+
 const myLocalDatabase = new LocalDatabase();
+
+
+
 module.exports = myLocalDatabase;            //we export one instance - a singelton
 
