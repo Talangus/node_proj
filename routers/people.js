@@ -101,10 +101,10 @@ peopleRouter.post('/:id/tasks/', (req, res) => {
       }
     }
     else if (type === 'HomeWork'){
-      const isValidDate = (date) => (new Date(date) !== "Invalid Date") && !isNaN(Date.parse(date));
+      const regDate = /^(\d{4})-(\d{2})-(\d{2})[T|' '](\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)(([-|+](\d{2}):(\d{2})|Z)?)$/;
       if (req.body.course == undefined || req.body.details == undefined || req.body.dueDate == undefined ||
           (req.body.status != 'Active' && req.body.status != 'Done' && req.body.status != undefined) || 
-          !isValidDate(req.body.dueDate))
+          !regDate.test(req.body.dueDate))
         res.status(400).send('Required data fields are missing, data makes no sense, or data contains illegal values.');
       else {
         if (req.body.status == undefined)

@@ -32,7 +32,11 @@ tasksRouter.patch('/:id', (req, res) => {
                         (req.body.status != undefined && req.body.status != 'Active' && req.body.status != 'Done'))
                         res.status(400).send('Invalid task details');
                     else {
-                        if (req.body.ownerId != undefined)
+                        const regDate = /^(\d{4})-(\d{2})-(\d{2})[T|' '](\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)(([-|+](\d{2}):(\d{2})|Z)?)$/;
+                        if (req.body.dueDate != undefined && !regDate.test(req.body.dueDate)){
+                            res.status(400).send('Invalid task details');
+                        }
+                        else if (req.body.ownerId != undefined)
                             db.getPersonDetails(req.body.ownerId).then(_ => 
                                 db.updateTaskDetails(req.params.id, req.body).then(data => res.send(data),
                                                                     err => res.status(400).res(err)),
