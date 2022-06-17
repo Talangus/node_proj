@@ -1,73 +1,60 @@
 const express = require('express');
-const PersonData = require('../modules/PersonData');
-const PersonDetails = require('../modules/PersonDetails');
-const TaskData = require('../modules/TaskData');
-const TaskDetails = require('../modules/TaskDetails');
 const db = require('../db');
+const { validStatus } = require('../modules/TaskData');
+const TaskData = require('../modules/TaskData');
 const tasksRouter = express.Router();
-const bodyParser = require('body-parser');
-
 
 tasksRouter.get('/:id', (req, res) => {
-    /* check id exists */
     db.getTaskDetails(req.params.id)
         .then(data => res.send(data),
                 () => res.status(404).send("A task with the id '"+req.params.id+"' does not exist."));
 });
 
 tasksRouter.patch('/:id', (req, res) => {
-    /* check id exists */
-    /* type and its fildes are compatible */
-    /* if all fildes are empty - return 200 */
-    //returns TaskDetails
-    if (req.body.type != undefined)
-        res.status(400).send('Type change is illegal.')
-    else {
-        db.getTaskDetails(req.params.id)
-            .then(data => {
-                if(Object.keys(req.body).length === 0)
-                    res.status(200).send(data);
-                else if (data.type === 'HomeWork'){
-                    if (req.body.size != undefined || req.body.description != undefined ||
-                        (req.body.status != undefined && req.body.status != 'Active' && req.body.status != 'Done'))
-                        res.status(400).send('Invalid task details');
-                    else {
-                        const regDate = /^(\d{4})-(\d{2})-(\d{2})[T|' '](\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)(([-|+](\d{2}):(\d{2})|Z)?)$/;
-                        if (req.body.dueDate != undefined && !regDate.test(req.body.dueDate)){
-                            res.status(400).send('Invalid task details');
-                        }
-                        else if (req.body.ownerId != undefined)
-                            db.getPersonDetails(req.body.ownerId).then(_ => 
-                                db.updateTaskDetails(req.params.id, req.body).then(data => res.send(data),
-                                                                    err => res.status(400).res(err)),
-                                                            () => res.status(404).send("A person with the id '"+req.params.id+"' does not exist."))
-                        else
-                            db.updateTaskDetails(req.params.id, req.body).then(data => res.send(data),
-                                                                err => res.status(400).res(err))
-                    }
-                }
-                else {
-                    if (req.body.dueDate != undefined || req.body.course != undefined || req.body.details != undefined ||
-                        (req.body.size != undefined && req.body.size != 'Large' && req.body.size != 'Medium' && req.body.size != 'Small') ||
-                        (req.body.status != undefined && req.body.status != 'Active' && req.body.status != 'Done'))
-                        res.status(400).send('Invalid task details');
-                    else {
-                        if (req.body.ownerId != undefined)
-                            db.getPersonDetails(req.body.ownerId).then(_ => 
-                                db.updateTaskDetails(req.params.id, req.body).then(data => res.send(data),
-                                                                    err => res.status(400).res(err)),
-                                                            () => res.status(404).send("A person with the id '"+req.params.id+"' does not exist."))
-                        else
-                            db.updateTaskDetails(req.params.id, req.body).then(data => res.send(data),
-                                                                err => res.status(400).res(err))
-                    }
-                }},
-            () => res.status(404).send("A task with the id '"+req.params.id+"' does not exist."));
-    }
+  db.getTaskDetails(req.params.id)
+      .then(data => {
+          if (TaskData.isEmpty(req.body) || TaskData.onlySameTypeData(req.body, data.type) )
+              res.status(200).send(data);
+          else if (req.body.type && req.body.type != data.type)              // check we got the same type
+              res.status(400).send('Type change is illegal.')
+          
+          else if (data.type === 'HomeWork'){
+              if (!TaskData.validTypefields(req.body, "Homework") || (req.body.status && !TaskData.validStatus(req.body)))
+                res.status(400).send('Invalid Homework data');
+              else if (req.body.dueDate && !TaskData.validDate(req.body))
+                res.status(400).send('Invalid date format');
+              else{                                                             //handle request
+                if (req.body.ownerId)                                          //if owner id provided                                               
+                      db.getPersonDetails(req.body.ownerId).then(_ => 
+                          db.updateTaskDetails(req.params.id, req.body).then(data => res.send(data),
+                                                              err => res.status(400).send(err)),
+                                                      () => res.status(404).send("A person with the id '"+req.params.id+"' does not exist."))
+                else
+                    db.updateTaskDetails(req.params.id, req.body).then(data => res.send(data),
+                                                        err => res.status(400).send(err))
+              }
+          }
+
+          else {                                                                              //chore update
+              if (!TaskData.validTypefields(req.body, "Chore") || (req.body.status && !TaskData.validStatus(req.body)) ||
+                  (req.body.size && !TaskData.validSize(req.body)))
+                    res.status(400).send('Invalid Chore data');
+              else {
+                  if (req.body.ownerId)
+                      db.getPersonDetails(req.body.ownerId).then(_ => 
+                          db.updateTaskDetails(req.params.id, req.body).then(data => res.send(data),
+                                                              err => res.status(400).send(err)),
+                                                      () => res.status(404).send("A person with the id '"+req.body.ownerId+"' does not exist."))
+                  else
+                      db.updateTaskDetails(req.params.id, req.body).then(data => res.send(data),
+                                                          err => res.status(400).send(err))
+              }
+          }},
+      () => res.status(404).send("A task with the id '"+req.params.id+"' does not exist."));
+
 }); 
 
 tasksRouter.delete('/:id', (req, res) => {
-    /* check id exists */
     db.getTaskDetails(req.params.id)
         .then(() => {
             db.deleteTaskDetails(req.params.id).then(
@@ -78,18 +65,15 @@ tasksRouter.delete('/:id', (req, res) => {
 });
 
 tasksRouter.get('/:id/status', (req, res) => {
-    /* check id exists */
     db.getTaskDetails(req.params.id).then(
         data => res.status(200).json(data.status),
         () => res.status(404).send("A task with the id '"+req.params.id+"' does not exist."));
 });
 
 tasksRouter.put('/:id/status', (req, res) => {
-    /* check id exists */
-    /* check status is valid */
     db.getTaskDetails(req.params.id)
         .then(() => {
-            if(req.body != 'Active' && req.body !='Done')
+            if(!validStatus(req.body))
                 res.status(400).send("value "+req.body+" is not a legal task status.");
             else{
                 db.updateTaskStatus(req.params.id, req.body).then(
@@ -101,14 +85,12 @@ tasksRouter.put('/:id/status', (req, res) => {
 });
 
 tasksRouter.get('/:id/owner', (req, res) => {
-    /* check id exists */
     db.getTaskDetails(req.params.id).then(
         data => res.status(200).json(data.ownerId),
         () => res.status(404).send("A task with the id '"+req.params.id+"' does not exist."));
 });
 
 tasksRouter.put('/:id/owner', (req, res) => {
-    /* check task id and owner id exists */
     db.getTaskDetails(req.params.id)
         .then(() => {
         db.updateTaskOwner(req.params.id, req.body).then(
