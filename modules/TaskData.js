@@ -10,13 +10,13 @@ class TaskData {
     }
 
     static onlySameTypeData(taskData, type){                      //patch task edge case - only the same task type in data
-        return (taskData.type == type && taskData.course == undefined &&   taskData.details == undefined
+        return (taskData.type == type && taskData.course == undefined && taskData.details == undefined
             && taskData.dueDate == undefined && taskData.status == undefined && taskData.description == undefined
             && taskData.size == undefined) 
     }
 
     static isEmpty(taskData){
-        return (taskData.type == undefined && taskData.course == undefined &&   taskData.details == undefined
+        return (taskData.type == undefined && taskData.course == undefined && taskData.details == undefined
                 && taskData.dueDate == undefined && taskData.status == undefined && taskData.description == undefined
                 && taskData.size == undefined)
     }
