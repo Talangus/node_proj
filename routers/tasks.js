@@ -24,13 +24,9 @@ tasksRouter.patch('/:id', (req, res) => {
               else if (req.body.dueDate && !TaskData.validDate(req.body))
                 res.status(400).type('text/plain').send("Bad date format (non RFC3339).");
               else{                                                             //handle request
-                if (req.body.ownerId)                                          //if owner id provided                                               
-                      db.getPersonDetails(req.body.ownerId).then(_ => 
-                          db.updateTaskDetails(req.params.id, req.body).then(data => res.send(data),
-                                                                             err => res.status(400).type('text/plain').send(err)),
-                                                      () => res.status(404).type('text/plain').send("A person with the id '"+req.params.id+"' does not exist."))
-                else
-                    db.updateTaskDetails(req.params.id, req.body).then(data => res.send(data),
+                if (req.body.ownerId)
+                    req.body.ownerId = undefined                                //ownerid isn't a data filed, we cant pass it to updateTaskDetails
+                db.updateTaskDetails(req.params.id, req.body).then(data => res.send(data),
                                                                         err => res.status(400).type('text/plain').send(err))
               }
           }
@@ -91,13 +87,12 @@ tasksRouter.get('/:id/owner', (req, res) => {
 });
 
 tasksRouter.put('/:id/owner', (req, res) => {
-    db.getTaskDetails(req.params.id)
-        .then(() => {
-        db.updateTaskOwner(req.params.id, req.body).then(
-            () => res.status(204).send("task's owner updated successfully."),
-            () => {res.status(404).type('text/plain').send("person with id '"+req.body+"' does not exist.")});
-        },
-    () => res.status(404).type('text/plain').send("A task with the id '"+req.params.id+"' does not exist."));;
+    db.getTaskDetails(req.params.id).then(
+        () => {db.getPersonDetails(req.body).then(
+                () => db.updateTaskOwner(req.params.id, req.body).then(
+                    () => res.status(204).send("task's owner updated successfully.")),
+                () => {res.status(404).type('text/plain').send("person with id '"+req.body+"' does not exist.")})},
+        () => res.status(404).type('text/plain').send("A task with the id '"+req.params.id+"' does not exist."));;
 });
 
 module.exports = tasksRouter;

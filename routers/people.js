@@ -48,7 +48,7 @@ peopleRouter.delete('/:id', (req, res) => {
     .then(() => 
       db.removePersondetails(req.params.id)
         .then(() => res.send('Person removed successfully.'),
-              () => res.status(400).end()),
+              err => res.status(400).send(err.message)),
           () => res.status(404).type('text/plain').send("A person with the id '"+req.params.id+"' does not exist."));
 }); 
 

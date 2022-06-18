@@ -150,11 +150,11 @@ class LocalDatabase {
     }
 
     removePersondetails(id){
-        let deletePerson = this.myDB(RUN, cmds.removePersondetails, [id])
-        let deleteTasks = deletePerson.then(this.myDB(RUN, cmds.removePersonTasks, [id]))       //delete from task tabke
+        let deleteTasks = this.myDB(RUN, cmds.removePersonTasks, [id])                          //delete from task table
         let deleteChores = deleteTasks.then(this.myDB(RUN, cmds.removePersonChore, [id]))       //delete from chores table
         let deleteHomework = deleteChores.then(this.myDB(RUN, cmds.removePersonHomework, [id])) //delte from HW table
-        return deleteHomework
+        let deletePerson = deleteHomework.then(this.myDB(RUN, cmds.removePersondetails, [id]))  //we first delete the persons tasks (keep foriegn keys of tasks valid) 
+        return deletePerson
     }
 
     insertTaskData(ownerId, tData){
@@ -223,8 +223,8 @@ class LocalDatabase {
         let typePromise = this.myDB(GET, cmds.getTasktype, [taskId])        //get type
         let detailsPromise = typePromise.then((dict => {return dict.type == 'HomeWork' ? this.myDB(GET, cmds.getHomeworkDetails, [taskId]):
                                                         dict.type == 'Chore' ? this.myDB(GET, cmds.getChoreDetails, [taskId]) : 'Bad task type1'}) )    //get deatils to check owner
-        detailsPromise.then(currTask => {if (currTask.status == 'Active'){this.decrementTaskCount(currTask.ownerId)
-                                                                          this.incrementTaskCount(ownerId)}})           //increment/ decrment if needed
+        detailsPromise.then(currTask => {if (currTask.status == 'Active'){this.incrementTaskCount(ownerId)
+                                                                          this.decrementTaskCount(currTask.ownerId)}})           //increment/ decrment if needed
         return this.updateTaskDetails(taskId, {ownerId: ownerId})           //final update to recored
     }
 
