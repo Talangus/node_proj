@@ -1,5 +1,5 @@
 const sqlite3 = require('sqlite3').verbose()
-const crypto =  require('crypto')
+const { v4: uuidv4 } = require('uuid');
 const db = new sqlite3.Database('./database.sqlite3')
 const PersonDetails = require('./modules/PersonDetails')
 const choreDetails = require('./modules/ChoreDetails')
@@ -68,7 +68,7 @@ for (var key in tables){                //database tables initialzation
 }
 db.run("PRAGMA foreign_keys = ON")      //enable valid forigen key enforcement
 
-let getNewId = () => crypto.randomBytes(10).toString('hex')         //id's are 10 byets hex string
+let getNewId = () => uuidv4()         //id's are 10 byets hex string
 
 function parsePatchCmd(id, data, type){                                               //parses an update command based on data and type
     let cmd, vals, names 
